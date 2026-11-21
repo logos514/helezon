@@ -1,0 +1,24 @@
+name: Veri kontrolü
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  dogrula:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Veriyi doğrula ve derle
+        run: node src/derle.js
+      - name: veri.json güncel mi
+        run: |
+          if ! git diff --quiet -- veri.json; then
+            echo "::error::veri.json kaynak dosyalarla uyuşmuyor. 'node src/derle.js' çalıştırıp sonucu commit edin."
+            git diff --stat -- veri.json
+            exit 1
+          fi
