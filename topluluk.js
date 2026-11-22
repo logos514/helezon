@@ -113,7 +113,9 @@
     if (/Password should be/i.test(m)) return "Şifre en az 6 karakter olmalı.";
     if (/different from the old/i.test(m)) return "Yeni şifre eskisinden farklı olmalı.";
     if (/rate limit|security purposes/i.test(m)) return "Çok sık denendi. Biraz bekleyip yeniden dene.";
-    if (/relation .* does not exist|schema cache|Could not find the table/i.test(m)) return "Topluluk tabloları veritabanında bulunamadı (kurulum SQL'i çalıştırılmamış olabilir).";
+    if (/relation .* does not exist|schema cache|Could not find the table/i.test(m)) return "Topluluk tabloları veritabanında bulunamadı. Kurulum SQL'i bu projede çalıştırılmamış ya da yarıda kalmış olabilir.";
+    if (/permission denied/i.test(m)) return "Veritabanı tablolara erişim izni vermiyor. Kurulum SQL'inin son hâlini yeniden çalıştırın.";
+    if (/Invalid schema|must be one of the following/i.test(m)) return "Veritabanının “public” şeması Data API'ye açık değil (Supabase: Project Settings → Data API → Exposed schemas).";
     if (/row-level security|violates/i.test(m)) return "Bu işlem için yetkin yok ya da içerik kurallara uymuyor.";
     if (/Failed to fetch|NetworkError|kütüphane/i.test(m)) return "Bağlantı kurulamadı. İnternet bağlantını kontrol et.";
     return "Bir sorun oluştu" + (m ? ": " + m : ".");
@@ -138,7 +140,10 @@
       "Yazılar akademik atlastaki kayıtlara bağlanabilecek. Bölüm henüz veritabanına bağlanmadı.</p>");
   }
   function cevrimdisi(e) {
-    ciz(ust("", "") + '<p class="tk-hata" role="alert">' + esc(hataMetni(e)) + '</p><p><button class="chip" data-tk="yenile">Yeniden dene</button></p>');
+    var ayrinti = e && (e.code || e.message) ? [e.code, e.message, e.hint].filter(Boolean).join(" · ") : "";
+    ciz(ust("", "") + '<p class="tk-hata" role="alert">' + esc(hataMetni(e)) + "</p>" +
+      (ayrinti ? '<p class="hint" style="font-family:var(--f-mono);font-size:.74rem;overflow-wrap:anywhere">Teknik ayrıntı: ' + esc(ayrinti) + "</p>" : "") +
+      '<p><button class="chip" data-tk="yenile">Yeniden dene</button></p>');
   }
 
   function konuSatiri(k) {

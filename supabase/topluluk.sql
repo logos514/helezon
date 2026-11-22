@@ -134,6 +134,41 @@ create policy "yanit silme" on yanitlar for delete using (auth.uid() = yazar_id 
 
 -- Profiller, düzenleme ve rol değişikliği yalnızca panelden yapılır (politika yok = kimse değiştiremez).
 
+-- 6) Erişim izinleri. Bazı yeni Supabase projelerinde tablolar Data API'ye
+--    otomatik açılmaz; bu satırlar izinleri açıkça verir (kuralları RLS belirler).
+grant usage on schema public to anon, authenticated;
+grant select on profiller, konular, yanitlar to anon, authenticated;
+grant insert, delete on konular, yanitlar to authenticated;
+grant execute on function hz_yonetici() to anon, authenticated;
+
+-- 7) Bu dosya çalıştırılmadan ÖNCE açılmış hesapların profili yoksa oluştur.
+do $$
+declare
+  u record;
+  ad text;
+  aday text;
+  i int;
+begin
+  for u in select id, email, raw_user_meta_data from auth.users
+           where id not in (select id from public.profiller) order by created_at loop
+    ad := left(btrim(coalesce(u.raw_user_meta_data->>'kullanici_adi', split_part(u.email, '@', 1))), 36);
+    if char_length(ad) < 2 then ad := 'okur'; end if;
+    aday := ad; i := 1;
+    while exists (select 1 from public.profiller where lower(kullanici_adi) = lower(aday)) loop
+      i := i + 1; aday := ad || i;
+    end loop;
+    insert into public.profiller (id, kullanici_adi) values (u.id, aday);
+  end loop;
+end $$;
+
+-- 8) API'nin yeni tabloları hemen görmesi için şema önbelleğini tazele.
+notify pgrst, 'reload schema';
+
+-- Kurulum bitti. Aşağıdaki sorgu üç tabloyu listelemeli (profiller, konular, yanitlar):
+select table_name from information_schema.tables
+where table_schema = 'public' and table_name in ('profiller', 'konular', 'yanitlar')
+order by table_name;
+
 -- Kendini yönetici yapmak için: siteye bir kez kayıt ol, sonra şu satırı
 -- kendi kullanıcı adınla çalıştır:
 --   update profiller set rol = 'yonetici' where kullanici_adi = 'KULLANICI-ADIN';
