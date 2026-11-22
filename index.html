@@ -1076,9 +1076,10 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
   // ---------- Yönlendirme ----------
   function goster() {
     var h = decodeURIComponent(location.hash.replace(/^#/, ""));
-    // E-posta onay bağlantısından dönüş (#access_token=...): oturumu topluluk tarafı yakalar.
+    // E-posta onay ya da şifre yenileme bağlantısından dönüş (#access_token=...): oturumu topluluk tarafı yakalar.
     if (/(^|&)(access_token|error_description)=/.test(h)) {
-      window.Topluluk.oturumuYakala().then(function () { location.hash = "topluluk"; }, function () { location.hash = "topluluk"; });
+      var hedef = /(^|&)type=recovery(&|$)/.test(h) ? "topluluk-sifre" : "topluluk";
+      window.Topluluk.oturumuYakala().then(function () { location.hash = hedef; }, function () { location.hash = hedef; });
       return;
     }
     var toplulukModu = h === "topluluk" || h.indexOf("topluluk-") === 0;

@@ -8,16 +8,18 @@ Yayın adresi: https://logos514.github.io/helezon/ (Sophidex'ten kopyalanarak ba
 Üstteki seçici uygulamayı ikiye ayırır.
 
 - **Akademik:** Atlas ve Soy ağacı. İçerik `src/` dosyalarından derlenir, PR ile gözden geçirilerek değişir; her ayrıntı sayfasında "Akademik kayıt" rozeti vardır. Kullanıcılar bu tarafı değiştiremez.
-- **Topluluk** (`#topluluk`): herkes okuyabilir; giriş yapan herkes konu açabilir (Tartışma, Soru, Yazı) ve yanıt yazabilir. Bir konu bir atlas kaydına bağlanabilir; metinde `[[Kant]]` yazmak o kayda bağlantı olur. Her akademik sayfanın altında o kayıtla ilgili topluluk konularına giden bir düğme ve konu sayısı vardır. Yazar kendi yazısını, Agora'daki yöneticiler her yazıyı silebilir.
+- **Topluluk** (`#topluluk`): herkes okuyabilir; giriş yapan herkes konu açabilir (Tartışma, Soru, Yazı) ve yanıt yazabilir. Bir konu bir atlas kaydına bağlanabilir; metinde `[[Kant]]` yazmak o kayda bağlantı olur. Her akademik sayfanın altında o kayıtla ilgili topluluk konularına giden bir düğme ve konu sayısı vardır. Yazar kendi yazısını, yöneticiler her yazıyı silebilir. Hesaplar yalnızca Helezon'a aittir; başka bir uygulamayla paylaşılmaz.
 
-Rotalar: `#topluluk`, `#topluluk-k-<konu id>`, `#topluluk-kayit-<atlas id>`, `#topluluk-yeni`, `#topluluk-giris`.
+Rotalar: `#topluluk`, `#topluluk-k-<konu id>`, `#topluluk-kayit-<atlas id>`, `#topluluk-yeni`, `#topluluk-giris`, `#topluluk-sifre`.
 
 ### Topluluk kurulumu (Supabase)
-Topluluk yazıları Agora'nın Supabase projesinde, `hz_` önekli tablolarda durur; hesaplar ve kullanıcı adları Agora ile ortaktır.
-1. Supabase panelinde **SQL Editor**'de `supabase/topluluk.sql` dosyasının tamamını çalıştırın (Agora tablolarına dokunmaz, tekrar çalıştırılabilir).
-2. **Project Settings → API**'deki `Project URL` ve `anon public` anahtarını `topluluk-ayar.js` dosyasına yazın.
-3. İsteğe bağlı: **Authentication → URL Configuration → Redirect URLs** listesine `https://logos514.github.io/helezon/**` ekleyin; böylece Helezon'dan kayıt olanların onay bağlantısı Helezon'a döner.
-4. `sw.js` içindeki `SURUM` değerini artırın.
+Topluluk yazıları ve hesaplar Helezon'a ait ayrı bir Supabase projesinde durur (tablolar: `profiller`, `konular`, `yanitlar`).
+1. https://supabase.com adresinde yeni bir proje açın (ör. adı `helezon`).
+2. **SQL Editor**'de `supabase/topluluk.sql` dosyasının tamamını çalıştırın (tekrar çalıştırılabilir).
+3. **Project Settings → API**'deki `Project URL` ve `anon public` anahtarını `topluluk-ayar.js` dosyasına yazın.
+4. **Authentication → URL Configuration**'da **Site URL**'yi `https://logos514.github.io/helezon/` yapın; kayıt onayı ve şifre yenileme bağlantıları buraya döner.
+5. Siteye bir kez kayıt olun, sonra SQL Editor'de `update profiller set rol = 'yonetici' where kullanici_adi = 'KULLANICI-ADINIZ';` çalıştırın.
+6. `sw.js` içindeki `SURUM` değerini artırın.
 
 `topluluk-ayar.js` boşsa akademik taraf normal çalışır, Topluluk sekmesi "henüz bağlanmadı" der. Topluluk tarafı çevrimdışı çalışmaz; Supabase kütüphanesi yalnızca Topluluk açıldığında yüklenir.
 

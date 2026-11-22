@@ -1,13 +1,13 @@
 // Helezon — Topluluk tarafı.
-// Akademik atlas veri.json'dan okunur ve değişmez; topluluk yazıları Supabase'de durur
-// (Agora ile aynı proje, "hz_" önekli tablolar, bkz. supabase/topluluk.sql).
-// Rotalar: #topluluk, #topluluk-k-<konu id>, #topluluk-kayit-<atlas id>, #topluluk-yeni, #topluluk-yeni-<atlas id>, #topluluk-giris
+// Akademik atlas veri.json'dan okunur ve değişmez; topluluk yazıları ve hesaplar Helezon'un
+// kendi Supabase projesinde durur (bkz. supabase/topluluk.sql). Başka bir uygulamayla bağı yoktur.
+// Rotalar: #topluluk, #topluluk-k-<konu id>, #topluluk-kayit-<atlas id>, #topluluk-yeni, #topluluk-yeni-<atlas id>,
+// #topluluk-giris, #topluluk-sifre (şifre sıfırlama bağlantısından dönüşte yeni şifre)
 (function () {
   "use strict";
   var AYAR = window.HELEZON_TOPLULUK || {};
   var HAZIR = !!(AYAR.url && AYAR.anahtar);
   var KUTUPHANE = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
-  var AGORA = "https://agora-app-gamma.vercel.app";
   var TURLER = { tartisma: "Tartışma", soru: "Soru", yazi: "Yazı" };
   var SAYFA = 30;
 
@@ -52,17 +52,17 @@
   }
   function profilYukle() {
     if (!oturum) { profil = null; return Promise.resolve(); }
-    return sb.from("profiles").select("display_name, role").eq("id", oturum.user.id).maybeSingle().then(function (r) {
-      profil = r.data || { display_name: (oturum.user.email || "").split("@")[0], role: "member" };
+    return sb.from("profiller").select("kullanici_adi, rol").eq("id", oturum.user.id).maybeSingle().then(function (r) {
+      profil = r.data || { kullanici_adi: (oturum.user.email || "").split("@")[0], rol: "uye" };
     });
   }
-  function yonetici() { return !!(profil && profil.role === "admin"); }
+  function yonetici() { return !!(profil && profil.rol === "yonetici"); }
   function benim(yazarId) { return !!(oturum && oturum.user.id === yazarId); }
 
   // Akademik detay sayfasındaki "Toplulukta N konu" sayacı: kütüphaneyi yüklemeden tek bir REST isteği.
   function sayac(atlasId, hedef) {
     if (!HAZIR || !hedef || !navigator.onLine) return;
-    fetch(AYAR.url.replace(/\/$/, "") + "/rest/v1/hz_konular?select=id&atlas_id=eq." + encodeURIComponent(atlasId), {
+    fetch(AYAR.url.replace(/\/$/, "") + "/rest/v1/konular?select=id&atlas_id=eq." + encodeURIComponent(atlasId), {
       headers: { apikey: AYAR.anahtar, Authorization: "Bearer " + AYAR.anahtar, Prefer: "count=exact", Range: "0-0" }
     }).then(function (r) {
       var m = (r.headers.get("content-range") || "").match(/\/(\d+)$/);
@@ -81,7 +81,7 @@
     if (fark < 86400 * 7) return Math.floor(fark / 86400) + " gün önce";
     return d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
   }
-  function yazarAdi(x) { return (x.yazar && x.yazar.display_name) || "isimsiz"; }
+  function yazarAdi(x) { return (x.yazar && x.yazar.kullanici_adi) || "isimsiz"; }
 
   // [[Kant]] ya da [[kant]] yazımını atlas kaydına bağlantıya çevirir.
   function atlasBul(metin) {
@@ -111,7 +111,9 @@
     if (/Email not confirmed/i.test(m)) return "E-postan henüz onaylanmamış. Gelen kutundaki bağlantıya tıkla.";
     if (/already registered/i.test(m)) return "Bu e-postayla zaten bir hesap var; giriş yapmayı dene.";
     if (/Password should be/i.test(m)) return "Şifre en az 6 karakter olmalı.";
-    if (/hz_konular|hz_yanitlar|relation .* does not exist|schema cache/i.test(m)) return "Topluluk tabloları veritabanında bulunamadı (kurulum SQL'i çalıştırılmamış olabilir).";
+    if (/different from the old/i.test(m)) return "Yeni şifre eskisinden farklı olmalı.";
+    if (/rate limit|security purposes/i.test(m)) return "Çok sık denendi. Biraz bekleyip yeniden dene.";
+    if (/relation .* does not exist|schema cache|Could not find the table/i.test(m)) return "Topluluk tabloları veritabanında bulunamadı (kurulum SQL'i çalıştırılmamış olabilir).";
     if (/row-level security|violates/i.test(m)) return "Bu işlem için yetkin yok ya da içerik kurallara uymuyor.";
     if (/Failed to fetch|NetworkError|kütüphane/i.test(m)) return "Bağlantı kurulamadı. İnternet bağlantını kontrol et.";
     return "Bir sorun oluştu" + (m ? ": " + m : ".");
@@ -120,7 +122,7 @@
   // ---------- Çizim ----------
   function ust(baslik, alt) {
     var kullanici = oturum
-      ? '<span>Giriş yapan: <b>' + esc(profil ? profil.display_name : "") + '</b>' + (yonetici() ? ' <span class="tk-etiket">yönetici</span>' : "") + '</span> <button class="tk-bag" data-tk="cikis">Çıkış</button>'
+      ? '<span>Giriş yapan: <b>' + esc(profil ? profil.kullanici_adi : "") + '</b>' + (yonetici() ? ' <span class="tk-etiket">yönetici</span>' : "") + '</span> <button class="tk-bag" data-tk="cikis">Çıkış</button>'
       : '<a href="#topluluk-giris">Giriş yap / Kayıt ol</a>';
     return '<div class="tk-uyari" role="note"><b>Topluluk alanı.</b> Buradaki yazılar kullanıcılar tarafından yazılır, Helezon tarafından doğrulanmaz. ' +
       'Doğruluğu denetlenmiş bilgi için <a href="#">Akademik</a> tarafa bakın.</div>' +
@@ -152,8 +154,8 @@
     var v = atlasId && c.V[atlasId];
     if (atlasId && !v) { location.hash = "topluluk"; return; }
     bekle(v ? esc(v.n) : "Konular");
-    var sorgu = sb.from("hz_konular")
-      .select("id, baslik, tur, atlas_id, yanit_sayisi, son_etkinlik, created_at, yazar:profiles(display_name)", { count: "exact" })
+    var sorgu = sb.from("konular")
+      .select("id, baslik, tur, atlas_id, yanit_sayisi, son_etkinlik, created_at, yazar:profiller(kullanici_adi)", { count: "exact" })
       .order("son_etkinlik", { ascending: false })
       .range(0, liste.adet - 1);
     if (v) sorgu = sorgu.eq("atlas_id", atlasId);
@@ -187,8 +189,8 @@
     bekle("");
     var rota = son;
     Promise.all([
-      sb.from("hz_konular").select("id, baslik, govde, tur, atlas_id, yazar_id, yanit_sayisi, created_at, yazar:profiles(display_name)").eq("id", id).maybeSingle(),
-      sb.from("hz_yanitlar").select("id, govde, yazar_id, created_at, yazar:profiles(display_name)").eq("konu_id", id).order("created_at", { ascending: true })
+      sb.from("konular").select("id, baslik, govde, tur, atlas_id, yazar_id, yanit_sayisi, created_at, yazar:profiller(kullanici_adi)").eq("id", id).maybeSingle(),
+      sb.from("yanitlar").select("id, govde, yazar_id, created_at, yazar:profiller(kullanici_adi)").eq("konu_id", id).order("created_at", { ascending: true })
     ]).then(function (rs) {
       if (rota !== son) return;
       if (rs[0].error) { cevrimdisi(rs[0].error); return; }
@@ -217,7 +219,7 @@
         e.preventDefault();
         var metin = el("tk-yanit").value.trim();
         if (!metin) return;
-        gonder(f, sb.from("hz_yanitlar").insert({ konu_id: k.id, govde: metin, yazar_id: oturum.user.id }), function () { konuCiz(k.id); });
+        gonder(f, sb.from("yanitlar").insert({ konu_id: k.id, govde: metin, yazar_id: oturum.user.id }), function () { konuCiz(k.id); });
       });
     }, cevrimdisi);
   }
@@ -245,7 +247,7 @@
       }
       var kayit = { baslik: el("tk-baslik").value.trim(), govde: el("tk-govde").value.trim(), tur: el("tk-tur").value, atlas_id: bulunan ? bulunan.id : null, yazar_id: oturum.user.id };
       if (kayit.baslik.length < 3) { formHata("Başlık en az 3 harf olmalı."); return; }
-      gonder(f, sb.from("hz_konular").insert(kayit).select("id").single(), function (r) { location.hash = "topluluk-k-" + r.data.id; });
+      gonder(f, sb.from("konular").insert(kayit).select("id").single(), function (r) { location.hash = "topluluk-k-" + r.data.id; });
     });
   }
 
@@ -253,7 +255,7 @@
     if (oturum) { location.hash = "topluluk"; return; }
     mod = mod || "giris";
     ciz(ust(mod === "giris" ? "Giriş yap" : "Kayıt ol", "") +
-      '<p class="tk-giris">Okumak için giriş gerekmez. Yazmak için bir hesap gerekir. <b>Agora hesabın varsa</b> aynı e-posta ve şifreyle giriş yapabilirsin.</p>' +
+      '<p class="tk-giris">Okumak için giriş gerekmez. Yazmak için bir Helezon hesabı gerekir.</p>' +
       '<div class="filters" role="group" aria-label="Giriş ya da kayıt"><button class="chip" data-tk-mod="giris" aria-pressed="' + (mod === "giris") + '">Giriş yap</button><button class="chip" data-tk-mod="kayit" aria-pressed="' + (mod === "kayit") + '">Kayıt ol</button></div>' +
       '<form class="tk-form tk-dar" id="tk-giris-form">' +
       (mod === "kayit" ? '<label class="hint" for="tk-ad">Kullanıcı adı</label><input id="tk-ad" maxlength="40" required autocomplete="username">' : "") +
@@ -261,7 +263,7 @@
       '<label class="hint" for="tk-sifre">Şifre</label><input id="tk-sifre" type="password" minlength="6" required autocomplete="' + (mod === "kayit" ? "new-password" : "current-password") + '">' +
       '<p class="tk-hata" id="tk-form-hata" role="alert" hidden></p>' +
       '<button class="tk-dugme" type="submit">' + (mod === "giris" ? "Giriş yap" : "Kayıt ol") + "</button>" +
-      (mod === "giris" ? ' <a href="' + AGORA + '/sifremi-unuttum" target="_blank" rel="noopener">Şifremi unuttum</a>' : "") + "</form>");
+      (mod === "giris" ? ' <button type="button" class="tk-bag" data-tk="unuttum">Şifremi unuttum</button>' : "") + "</form>");
     var f = el("tk-giris-form");
     f.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -274,11 +276,11 @@
       }
       var ad = el("tk-ad").value.trim();
       if (ad.length < 2) { formHata("Kullanıcı adı en az 2 harf olmalı."); return; }
-      gonder(f, sb.from("profiles").select("id").ilike("display_name", ad.replace(/[%_\\]/g, "\\$&")).then(function (r) {
+      gonder(f, sb.from("profiller").select("id").ilike("kullanici_adi", ad.replace(/[%_\\]/g, "\\$&")).then(function (r) {
         if (r.data && r.data.length) return { error: { message: "__ad_alinmis" } };
         return sb.auth.signUp({
           email: eposta, password: sifre,
-          options: { data: { display_name: ad }, emailRedirectTo: location.origin + location.pathname + "#topluluk" }
+          options: { data: { kullanici_adi: ad }, emailRedirectTo: location.origin + location.pathname }
         });
       }), function (r) {
         if (r.data && r.data.session) { profilYukle().then(function () { location.hash = "topluluk"; }); return; }
@@ -288,6 +290,35 @@
     });
   }
   var girisSonrasi = "";
+
+  function unuttumCiz() {
+    ciz(ust("Şifremi unuttum", "") +
+      '<p class="tk-giris">Hesabının e-posta adresini yaz, şifreni yenilemen için bir bağlantı gönderelim.</p>' +
+      '<form class="tk-form tk-dar" id="tk-unuttum-form"><label class="hint" for="tk-eposta">E-posta</label><input id="tk-eposta" type="email" required autocomplete="email">' +
+      '<p class="tk-hata" id="tk-form-hata" role="alert" hidden></p><button class="tk-dugme" type="submit">Bağlantı gönder</button> <a href="#topluluk-giris">Vazgeç</a></form>');
+    var f = el("tk-unuttum-form");
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var eposta = el("tk-eposta").value.trim();
+      gonder(f, sb.auth.resetPasswordForEmail(eposta, { redirectTo: location.origin + location.pathname }), function () {
+        ciz(ust("E-postanı kontrol et", "") + '<p class="tk-giris" style="margin-top:16px">Bu adrese kayıtlı bir hesap varsa <b>' + esc(eposta) + "</b> adresine şifre yenileme bağlantısı gönderdik. Bağlantıya tıklayınca yeni şifreni belirleyebilirsin.</p>");
+      });
+    });
+  }
+
+  function sifreCiz() {
+    if (!oturum) { ciz(ust("Yeni şifre", "") + '<p class="tk-giris" style="margin-top:16px">Bağlantının süresi dolmuş olabilir. <a href="#topluluk-giris">Giriş sayfasından</a> yeniden “Şifremi unuttum”u dene.</p>'); return; }
+    ciz(ust("Yeni şifre belirle", "") +
+      '<form class="tk-form tk-dar" id="tk-sifre-form"><label class="hint" for="tk-sifre">Yeni şifre</label><input id="tk-sifre" type="password" minlength="6" required autocomplete="new-password">' +
+      '<p class="tk-hata" id="tk-form-hata" role="alert" hidden></p><button class="tk-dugme" type="submit">Şifreyi kaydet</button></form>');
+    var f = el("tk-sifre-form");
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      gonder(f, sb.auth.updateUser({ password: el("tk-sifre").value }), function () {
+        ciz(ust("Şifren yenilendi", "") + '<p class="tk-giris" style="margin-top:16px">Artık yeni şifrenle giriş yapabilirsin. <a href="#topluluk">Konulara dön</a></p>');
+      });
+    });
+  }
 
   function formHata(m) { var h = el("tk-form-hata"); if (h) { h.textContent = m; h.hidden = false; } }
   function gonder(form, istek, basari) {
@@ -313,6 +344,7 @@
     yukle().then(function () {
       if (son !== h) return;
       if (h === "topluluk-giris") girisCiz();
+      else if (h === "topluluk-sifre") sifreCiz();
       else if (h === "topluluk-yeni" || h.indexOf("topluluk-yeni-") === 0) {
         if (!oturum) girisSonrasi = h;
         yeniCiz(h.slice(14) || null);
@@ -332,13 +364,14 @@
       e.preventDefault();
       var a = t.getAttribute("data-tk");
       if (a === "cikis") { sb.auth.signOut().then(function () { oturum = null; profil = null; yenidenCiz(); }); return; }
+      if (a === "unuttum") { unuttumCiz(); return; }
       if (a === "yenile") { yukleme = null; goster(son); return; }
       if (a === "daha") { liste.adet += SAYFA; goster(son); return; }
       if (t.hasAttribute("data-tk-mod")) { girisCiz(t.getAttribute("data-tk-mod")); return; }
       if (t.hasAttribute("data-tk-tur")) { liste.tur = t.getAttribute("data-tk-tur"); liste.adet = SAYFA; goster(son); return; }
       var sil = t.getAttribute("data-tk-sil");
       if (sil) {
-        var p = sil.split(":"), tablo = p[0] === "konu" ? "hz_konular" : "hz_yanitlar";
+        var p = sil.split(":"), tablo = p[0] === "konu" ? "konular" : "yanitlar";
         if (!window.confirm(p[0] === "konu" ? "Bu konu ve tüm yanıtları silinsin mi?" : "Bu yanıt silinsin mi?")) return;
         sb.from(tablo).delete().eq("id", p[1]).then(function (r) {
           if (r.error) { window.alert(hataMetni(r.error)); return; }
