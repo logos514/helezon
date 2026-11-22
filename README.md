@@ -4,6 +4,25 @@ Felsefe tarihindeki filozofları, akımları ve kavramları anahtar kelimeyle ar
 
 Yayın adresi: https://logos514.github.io/helezon/ (Sophidex'ten kopyalanarak başlatıldı.)
 
+## İki yön: Akademik ve Topluluk
+Üstteki seçici uygulamayı ikiye ayırır.
+
+- **Akademik:** Atlas ve Soy ağacı. İçerik `src/` dosyalarından derlenir, PR ile gözden geçirilerek değişir; her ayrıntı sayfasında "Akademik kayıt" rozeti vardır. Kullanıcılar bu tarafı değiştiremez.
+- **Topluluk** (`#topluluk`): herkes okuyabilir; giriş yapan herkes konu açabilir (Tartışma, Soru, Yazı) ve yanıt yazabilir. Bir konu bir atlas kaydına bağlanabilir; metinde `[[Kant]]` yazmak o kayda bağlantı olur. Her akademik sayfanın altında o kayıtla ilgili topluluk konularına giden bir düğme ve konu sayısı vardır. Yazar kendi yazısını, yöneticiler her yazıyı silebilir. Hesaplar yalnızca Helezon'a aittir; başka bir uygulamayla paylaşılmaz.
+
+Rotalar: `#topluluk`, `#topluluk-k-<konu id>`, `#topluluk-kayit-<atlas id>`, `#topluluk-yeni`, `#topluluk-giris`, `#topluluk-sifre`.
+
+### Topluluk kurulumu (Supabase)
+Topluluk yazıları ve hesaplar Helezon'a ait ayrı bir Supabase projesinde durur (tablolar: `profiller`, `konular`, `yanitlar`).
+1. https://supabase.com adresinde yeni bir proje açın (ör. adı `helezon`).
+2. **SQL Editor**'de `supabase/topluluk.sql` dosyasının tamamını çalıştırın (tekrar çalıştırılabilir).
+3. **Project Settings → API**'deki `Project URL` ve `anon public` anahtarını `topluluk-ayar.js` dosyasına yazın.
+4. **Authentication → URL Configuration**'da **Site URL**'yi `https://logos514.github.io/helezon/` yapın; kayıt onayı ve şifre yenileme bağlantıları buraya döner.
+5. Siteye bir kez kayıt olun, sonra SQL Editor'de `update profiller set rol = 'yonetici' where kullanici_adi = 'KULLANICI-ADINIZ';` çalıştırın.
+6. `sw.js` içindeki `SURUM` değerini artırın.
+
+`topluluk-ayar.js` boşsa akademik taraf normal çalışır, Topluluk sekmesi "henüz bağlanmadı" der. Topluluk tarafı çevrimdışı çalışmaz; Supabase kütüphanesi yalnızca Topluluk açıldığında yüklenir.
+
 ## Soy ağacı
 Üstteki **Soy ağacı** sekmesi iki görünüm sunar. **Ağaç** görünümü filozofları zaman sırasıyla satırlara dizip etki ve hoca-öğrenci bağlarını çizgilerle gösteren bir diyagramdır; bir düğüme dokununca öncüller turuncu, ardıllar yeşil vurgulanır ve temel düşünce bir panelde açılır (−/+ ile yakınlaştırılır). **Kartlar** görünümü filozofları doğum yılına göre dikey bir zaman ekseninde dizer. Her kartta kimden etkilendiği, getirdiği yeni düşünce, en fazla üç cümlelik temel düşüncesi ve kimleri etkilediği yazar. Soldaki yaylar etki ve hoca-öğrenci bağlarıdır. Bir düşünüre dokununca öncülleri ve ardılları 1, 2 ya da tüm kuşaklar boyunca vurgulanır; "Yalnızca soy hattı" ile geri kalanlar gizlenir. Doğrudan bağlantı: `#soy-kant`.
 
@@ -20,6 +39,7 @@ Yayın adresi: https://logos514.github.io/helezon/ (Sophidex'ten kopyalanarak ba
 - `src/veri-soy.js`: her filozof için doğum yılı (`y`), getirdiği yeni düşünce (`yn`) ve en fazla 3 cümlelik temel düşünce (`o`).
 - `src/veri-detay-filozoflar.js`, `src/veri-detay-akimlar.js`: ayrıntı sayfasındaki uzun bölümler: `hb` hayatı ya da doğuşu ve bağlamı, `em` etkisi ve mirası, `ek` eleştiriler.
 - `src/veri-baglar.js`: bağlar, her satırda `kaynak ilişki hedef`.
+- `topluluk.js`: Topluluk tarafı (konu listesi, konu sayfası, yeni konu, giriş/kayıt). `topluluk-ayar.js`: Supabase adresi ve anon anahtarı. `supabase/topluluk.sql`: tablolar ve güvenlik kuralları.
 - `manifest.webmanifest`, `sw.js`, `simgeler/`: telefona kurulum, çevrimdışı çalışma ve simgeler.
 - `src/artifact.js`: claude.ai sürümü için gövde parçası üretir.
 - `.github/workflows/`: her pull request'te veriyi doğrular; `main` dalına her birleştirmede siteyi GitHub Pages'a yayınlar.
