@@ -1,10 +1,12 @@
 // Helezon servis çalışanı: uygulamayı ve veriyi önbelleğe alıp çevrimdışı açar.
 // Veri ya da arayüz değiştiğinde SURUM'u artırın; eski önbellek silinir.
-const SURUM = "helezon-v1";
+const SURUM = "helezon-v2";
 const TEMEL = [
   "./",
   "index.html",
   "veri.json",
+  "topluluk.js",
+  "topluluk-ayar.js",
   "manifest.webmanifest",
   "simgeler/simge.svg",
   "simgeler/simge-192.png",

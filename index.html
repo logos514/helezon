@@ -164,6 +164,70 @@ svg.graph .edge { fill: none; }
 .views a { font-size: .86rem; font-weight: 500; color: var(--muted); text-decoration: none; padding: 5px 14px; border-radius: 999px; }
 .views a[aria-current="page"] { background: var(--ink); color: var(--bg); }
 .views a:focus-visible { outline: 2px solid var(--filozof); outline-offset: 1px; }
+/* İki yön: Akademik (derlenmiş, denetlenen atlas) ve Topluluk (kullanıcı katkıları) */
+:root { --topluluk: #7446B0; --topluluk-zemin: #F1EAFA; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --topluluk: #B99AEC; --topluluk-zemin: #261E35; } }
+:root[data-theme="dark"] { --topluluk: #B99AEC; --topluluk-zemin: #261E35; }
+.yonler { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.yon { display: flex; flex-direction: column; padding: 7px 16px; text-decoration: none; color: var(--muted); border-top: 3px solid transparent; min-width: 0; }
+.yon + .yon { border-left: 1px solid var(--line); }
+.yon b { font-size: .95rem; font-weight: 600; }
+.yon small { font-size: .72rem; line-height: 1.3; }
+.yon-ak[aria-current="page"] { color: var(--ink); border-top-color: var(--filozof); background: var(--bg); }
+.yon-tk[aria-current="page"] { color: var(--topluluk); border-top-color: var(--topluluk); background: var(--topluluk-zemin); }
+.yon:focus-visible { outline: 2px solid var(--filozof); outline-offset: -2px; }
+@media (max-width: 600px) { .yonler { width: 100%; } }
+.topluluk-modu .layout { grid-template-columns: minmax(0, 1fr); }
+.topluluk-modu .side, .topluluk-modu .views, .topluluk-modu .stats { display: none; }
+.rozet-ak { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); letter-spacing: .04em; font-size: .68rem; }
+.rozet-ak::before { content: "✓"; color: var(--kavram); font-weight: 700; }
+.tk-kutu { margin-top: 26px; border-top: 1px solid var(--line); padding-top: 18px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.tk-kutu p { margin: 0; flex: 1 1 280px; color: var(--muted); font-size: .9rem; }
+.tk-kutu p b { color: var(--topluluk); }
+/* Topluluk sayfaları */
+.card.tk { border-top: 3px solid var(--topluluk); }
+.tk .eyebrow .t-tk, .tk .t-tk { color: var(--topluluk); }
+.tk-uyari { background: var(--topluluk-zemin); border-radius: 10px; padding: 10px 14px; font-size: .86rem; margin-bottom: 16px; }
+.tk-uyari a, .tk a, .tk-kutu a { color: var(--topluluk); }
+.tk-bas { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px 20px; }
+.tk-bas > div:first-child { min-width: 0; flex: 1 1 320px; }
+.tk-kim { font-size: .84rem; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tk-kim b { color: var(--ink); }
+.tk-etiket { font-size: .7rem; border: 1px solid var(--line); border-radius: 999px; padding: 0 6px; }
+.tk-bag { font: inherit; font-size: .8rem; border: 0; background: none; color: var(--topluluk); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+.tk-giris { color: var(--muted); max-width: 70ch; margin: 12px 0 0; }
+.tk-giris .link-chip { vertical-align: middle; }
+.tk-arac { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 20px 0 12px; }
+.tk-ara { font: inherit; font-size: .9rem; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); flex: 1 1 200px; min-width: 0; }
+.tk-dugme { font: inherit; font-size: .9rem; font-weight: 600; display: inline-block; padding: 8px 16px; border-radius: 10px; border: 0; background: var(--topluluk); color: var(--surface) !important; text-decoration: none; cursor: pointer; }
+.tk-dugme:disabled { opacity: .6; cursor: wait; }
+.tk-dugme:focus-visible, .tk-ara:focus, .tk-form input:focus, .tk-form textarea:focus, .tk-form select:focus { outline: 2px solid var(--topluluk); outline-offset: 1px; }
+.tk-liste { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.tk-liste li + li { border-top: 1px solid var(--line); }
+.tk-konu { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; padding: 11px 14px; text-decoration: none; color: var(--ink) !important; }
+.tk-konu:hover { background: var(--sunk); }
+.tk-konu-ad { font-weight: 600; }
+.tk-konu .tk-meta { grid-column: 2; }
+.tk-meta { font-size: .8rem; color: var(--muted); margin: 0; }
+.tk-meta .dot { vertical-align: middle; }
+.tk-tur { font-size: .68rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: var(--sunk); color: var(--muted); align-self: start; margin-top: 2px; }
+.tk-tur.tk-soru { color: var(--akim); } .tk-tur.tk-yazi { color: var(--kavram); } .tk-tur.tk-tartisma { color: var(--topluluk); }
+.tk-metin { max-width: 70ch; font-size: 1rem; overflow-wrap: anywhere; }
+.tk-metin p { margin: 12px 0 0; }
+.tk-metin .link-chip { vertical-align: baseline; }
+.tk-yanitlar { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.tk-yanitlar li { border-left: 3px solid var(--topluluk-zemin); padding: 4px 0 4px 14px; }
+.tk-yanitlar .tk-metin p:first-child { margin-top: 4px; }
+.tk-form { display: flex; flex-direction: column; gap: 6px; margin-top: 22px; max-width: 760px; }
+.tk-form.tk-dar { max-width: 380px; }
+.tk-form input, .tk-form textarea, .tk-form select { font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
+.tk-form textarea { resize: vertical; line-height: 1.5; }
+.tk-form label { margin-top: 8px; }
+.tk-form button { align-self: flex-start; margin-top: 10px; }
+.tk-iki { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 0 14px; }
+@media (max-width: 600px) { .tk-iki { grid-template-columns: minmax(0, 1fr); } }
+.tk-iki > div { display: flex; flex-direction: column; gap: 6px; }
+.tk-hata { color: var(--catisma); font-size: .88rem; margin: 6px 0 0; }
 .soy-modu .layout { grid-template-columns: minmax(0, 1fr); }
 .soy-modu .side { display: none; }
 
@@ -310,7 +374,11 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
       <h1 id="home" tabindex="0" role="link" aria-label="Helezon ana sayfa">Helezon</h1>
       <p>Thales'ten Butler'a fikirler, akımlar ve aralarındaki bağlar</p>
     </div>
-    <nav class="views" aria-label="Görünüm">
+    <nav class="yonler" aria-label="Bölüm">
+      <a href="#" id="y-akademik" class="yon yon-ak" aria-current="page"><b>Akademik</b><small>Doğruluğu denetlenmiş atlas</small></a>
+      <a href="#topluluk" id="y-topluluk" class="yon yon-tk"><b>Topluluk</b><small>Tartışma, soru ve katkılar</small></a>
+    </nav>
+    <nav class="views" aria-label="Akademik görünüm">
       <a href="#" id="v-atlas" aria-current="page">Atlas</a>
       <a href="#soy" id="v-soy">Soy ağacı</a>
     </nav>
@@ -339,8 +407,11 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
 
     <main id="main" tabindex="-1"></main>
   </div>
-  <footer>Özetler genel başvuru içindir; tarihler yaklaşık olabilir. Kayıtlar ve bağlar <code>veri.json</code> dosyasından okunur.</footer>
+  <footer>Akademik taraf: özetler derlenmiş ve denetlenen kayıtlardır, genel başvuru içindir; tarihler yaklaşık olabilir. Topluluk tarafı: yazılar kullanıcılara aittir ve doğrulanmamıştır.</footer>
 </div>
+
+<script src="topluluk-ayar.js"></script>
+<script src="topluluk.js"></script>
 
 <script>
 (function () {
@@ -599,7 +670,7 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
 
     $("main").innerHTML =
       '<article class="card">' +
-      '<div class="eyebrow"><span class="dot ' + v.t + '"></span><span class="t-' + v.t + '">' + TUR[v.t] + "</span><span>·</span><span>" + esc(DONEM[v.e].ad) + "</span></div>" +
+      '<div class="eyebrow"><span class="dot ' + v.t + '"></span><span class="t-' + v.t + '">' + TUR[v.t] + "</span><span>·</span><span>" + esc(DONEM[v.e].ad) + '</span><span class="rozet-ak" title="Helezon ekibince derlenmiş ve denetlenen kayıt">Akademik kayıt</span></div>' +
       '<h2 class="title">' + esc(v.n) + "</h2>" +
       (v.al && v.al.length ? '<p class="aliases">Diğer adları: ' + esc(v.al.join(", ")) + "</p>" : "") +
       '<div class="facts">' + facts.join("") + "</div>" +
@@ -616,7 +687,10 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
       (v.k && v.k.length ? '<h3 class="sec" style="margin-top:22px">Anahtar kelimeler</h3><div class="filters">' + v.k.map(function (x) { return '<button class="chip" data-q="' + esc(x) + '">' + esc(x) + "</button>"; }).join("") + "</div>" : "") +
       '</section><section><h3 class="sec">Bağlar</h3><div class="links">' + (bagHtml || '<p class="hint">Bu kayıt için henüz bağ girilmedi.</p>') + "</div></section></div>" +
       '<div class="graph-box"><div class="graph-head"><h3 class="sec">Bağ haritası</h3>' + LEJANT + '</div><div class="graph-scroll">' + haritaCiz(dugumler, kenarlar, id) + "</div></div>" +
+      '<div class="tk-kutu"><p><b>Toplulukta:</b> <span id="tk-sayi">Bu konuyu okurlarla tartış, soru sor ya da yazını ekle.</span></p>' +
+      '<a class="tk-dugme" href="#topluluk-kayit-' + id + '">Topluluk konularına git →</a></div>' +
       "</article>";
+    if (window.Topluluk) window.Topluluk.sayac(id, $("tk-sayi"));
   }
 
   function konuCiz(r) {
@@ -1002,9 +1076,25 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
   // ---------- Yönlendirme ----------
   function goster() {
     var h = decodeURIComponent(location.hash.replace(/^#/, ""));
+    // E-posta onay bağlantısından dönüş (#access_token=...): oturumu topluluk tarafı yakalar.
+    if (/(^|&)(access_token|error_description)=/.test(h)) {
+      window.Topluluk.oturumuYakala().then(function () { location.hash = "topluluk"; }, function () { location.hash = "topluluk"; });
+      return;
+    }
+    var toplulukModu = h === "topluluk" || h.indexOf("topluluk-") === 0;
     var soyModu = h === "soy" || h.indexOf("soy-") === 0;
+    $("y-topluluk").setAttribute("aria-current", toplulukModu ? "page" : "false");
+    $("y-akademik").setAttribute("aria-current", toplulukModu ? "false" : "page");
     $("v-soy").setAttribute("aria-current", soyModu ? "page" : "false");
-    $("v-atlas").setAttribute("aria-current", soyModu ? "false" : "page");
+    $("v-atlas").setAttribute("aria-current", soyModu || toplulukModu ? "false" : "page");
+    document.body.classList.toggle("topluluk-modu", toplulukModu);
+    if (toplulukModu) {
+      document.body.classList.remove("soy-modu");
+      if (soy.ro) { soy.ro.disconnect(); soy.ro = null; }
+      soy.kok = null; durum.secili = null;
+      window.Topluluk.goster(h);
+      return;
+    }
     if (soyModu) { durum.secili = null; soyGoster(h.slice(4) || null); return; }
     document.body.classList.remove("soy-modu");
     if (soy.ro) { soy.ro.disconnect(); soy.ro = null; }
@@ -1053,6 +1143,11 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
   });
   $("era").addEventListener("change", function (e) { durum.e = e.target.value; listeyiCiz(); if (!location.hash) goster(); });
   $("home").addEventListener("click", function () { aramaYap(""); });
+  $("y-akademik").addEventListener("click", function (e) {
+    e.preventDefault();
+    if (location.hash) history.pushState(null, "", location.pathname + location.search);
+    goster();
+  });
   $("v-atlas").addEventListener("click", function (e) {
     e.preventDefault();
     if (location.hash) history.pushState(null, "", location.pathname + location.search);
@@ -1076,13 +1171,15 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
     if (e.key === "Enter" && e.target.classList && e.target.classList.contains("node")) ac(e.target.getAttribute("data-id"));
     if ((e.key === "Enter" || e.key === " ") && e.target.getAttribute && e.target.getAttribute("data-ag")) { e.preventDefault(); soySec(e.target.getAttribute("data-ag"), false); }
     if (e.key === "Escape" && soy.secili && document.body.classList.contains("soy-modu")) soySec(null);
-    if (e.key === "/" && document.activeElement !== $("q")) { e.preventDefault(); $("q").focus(); }
+    if (e.key === "/" && document.activeElement !== $("q") && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !document.body.classList.contains("topluluk-modu")) { e.preventDefault(); $("q").focus(); }
   });
   window.addEventListener("hashchange", goster);
   window.addEventListener("popstate", goster);
 
   fetch("veri.json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (veri) {
-    hazirla(veri); listeyiCiz(); goster();
+    hazirla(veri);
+    window.Topluluk.baslat({ V: V, LISTE: LISTE, esc: esc, norm: norm, TUR: TUR, main: $("main") });
+    listeyiCiz(); goster();
   }).catch(function () {
     $("main").innerHTML = '<div class="card"><p>Veri dosyası (veri.json) yüklenemedi. Sayfayı yenileyin; sorun sürerse dosyanın sayfayla aynı klasörde olduğundan emin olun.</p></div>';
     $("stats").textContent = "";

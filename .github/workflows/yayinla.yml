@@ -29,7 +29,7 @@ jobs:
       - name: Site klasörünü hazırla
         run: |
           mkdir -p _site/simgeler
-          cp index.html veri.json manifest.webmanifest sw.js .nojekyll _site/
+          cp index.html veri.json topluluk.js topluluk-ayar.js manifest.webmanifest sw.js .nojekyll _site/
           cp simgeler/* _site/simgeler/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
