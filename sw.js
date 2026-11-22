@@ -1,6 +1,6 @@
 // Helezon servis çalışanı: uygulamayı ve veriyi önbelleğe alıp çevrimdışı açar.
 // Veri ya da arayüz değiştiğinde SURUM'u artırın; eski önbellek silinir.
-const SURUM = "helezon-v2";
+const SURUM = "helezon-v3";
 const TEMEL = [
   "./",
   "index.html",

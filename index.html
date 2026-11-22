@@ -328,10 +328,16 @@ svg.graph .edge { fill: none; }
 .ag-yil { font-family: var(--f-mono); font-size: 12px; fill: var(--muted); }
 .ag-k { fill: none; stroke: var(--muted); stroke-width: 1.2; opacity: .45; }
 .ag-k.h { stroke: var(--ink); stroke-width: 2; opacity: .6; }
+.ag-k.uz { opacity: .16; }
+.ag-k.h.uz { opacity: .3; }
+.agac-svg.uzerinde:not(.odak) .ag-k { opacity: .06; }
+.agac-svg.uzerinde:not(.odak) .ag-k.hv { opacity: 1; stroke: var(--filozof); stroke-width: 2.2; }
+.agac-svg.uzerinde:not(.odak) .dg { opacity: .35; }
+.agac-svg.uzerinde:not(.odak) .dg.hv { opacity: 1; }
 .agac-svg.odak .ag-k { opacity: .07; }
-.agac-svg.odak .ag-k.ust { stroke: var(--akim); opacity: .95; stroke-width: 2.2; }
-.agac-svg.odak .ag-k.alt { stroke: var(--kavram); opacity: .95; stroke-width: 2.2; }
-.agac-svg.odak .ag-k.dog { stroke-width: 3.4; }
+.agac-svg.odak .ag-k.ust { stroke: var(--akim); opacity: .45; stroke-width: 1.5; }
+.agac-svg.odak .ag-k.alt { stroke: var(--kavram); opacity: .45; stroke-width: 1.5; }
+.agac-svg.odak .ag-k.dog { stroke-width: 2.8; opacity: 1; }
 .agac-svg.yalniz .ag-k:not(.ust):not(.alt) { display: none; }
 .dg { cursor: pointer; transition: opacity .15s; }
 .dg rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
@@ -786,7 +792,7 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
       .map(function (v) { return '<option value="' + v.id + '">' + esc(v.n) + "</option>"; }).join("");
     $("main").innerHTML =
       '<article class="card soy-card" id="soy-art"><h2>Düşünce soy ağacı</h2>' +
-      "<p>Filozoflar doğum yıllarına göre yukarıdan aşağı dizili; çizgiler kimin kimi etkilediğini gösterir. Bir düşünüre dokununca öncülleri (turuncu) ve ardılları (yeşil) vurgulanır, temel düşüncesi en fazla üç cümleyle açılır. Kartlar görünümünde aynı bilgiler liste hâlinde durur.</p>" +
+      "<p>Filozoflar doğum yıllarına göre yukarıdan aşağı dizili; çizgiler kimin kimi etkilediğini gösterir. Kalabalığı azaltmak için birkaç kuşak öteye uzanan bağlar soluk çizilir ve kartların arasındaki kanallardan akar. Bir düşünüre dokununca öncülleri (turuncu) ve ardılları (yeşil) vurgulanır, temel düşüncesi en fazla üç cümleyle açılır. Kartlar görünümünde aynı bilgiler liste hâlinde durur.</p>" +
       '<div class="soy-bar">' +
         '<div class="mod" role="group" aria-label="Görünüm"><button data-mod="agac" aria-pressed="true">Ağaç</button><button data-mod="kart" aria-pressed="false">Kartlar</button></div>' +
         '<select id="soy-sec" aria-label="Düşünür seç"><option value="">Düşünür seç…</option>' + secenek + "</select>" +
@@ -936,28 +942,70 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
   }
   // ---------- Görsel ağaç (diyagram) ----------
   // Filozoflar zaman sırasıyla satırlara (en çok 5 kişi, en fazla 120 yıllık aralık) yerleşir.
-  // Her düğüm, öncüllerinin yatay ortalamasına yakın konur; böylece etki çizgileri olabildiğince dikey akar.
-  var AG = { NW: 170, NH: 64, GX: 16, RH: 118, LX: 76, MAX: 5 };
+  // Her satırda 5 sabit sütun (yuva) vardır; düğümler, bağlı oldukları düşünürlerin ortalama sütununa
+  // en yakın yuvaya konur (yukarı-aşağı birkaç tur). Böylece çizgiler kısalır ve daha az kesişir.
+  // Yuvalar arasındaki boşluklar (oluklar) uzak bağlar için kanal görevi görür: iki satırdan uzağa giden
+  // bir çizgi kartların içinden geçmez, en yakın oluktan aşağı iner.
+  var AG = { NW: 170, NH: 64, GX: 28, RH: 118, LX: 76, MAX: 5 };
   AG.W = AG.LX + AG.MAX * (AG.NW + AG.GX) + AG.GX;
+  function agYuva(i) { return AG.LX + AG.GX + AG.NW / 2 + i * (AG.NW + AG.GX); }
+  function agOluk(i) { return AG.LX + AG.GX / 2 + i * (AG.NW + AG.GX); }
+  // k düğümü sıralarını bozmadan 5 yuvaya, ağırlık merkezlerine en yakın olacak biçimde yerleştirir.
+  function yuvaAta(hedef) {
+    var k = hedef.length, en = null, enMal = Infinity;
+    (function dene(i, bas, sec, mal) {
+      if (mal >= enMal) return;
+      if (i === k) { en = sec.slice(); enMal = mal; return; }
+      for (var s = bas; s <= AG.MAX - (k - i); s++) { sec.push(s); dene(i + 1, s + 1, sec, mal + (s - hedef[i]) * (s - hedef[i])); sec.pop(); }
+    })(0, 0, [], 0);
+    return en;
+  }
   function agacDuzen() {
     var fs = soy.fs.filter(function (v) { return !soy.donem || v.e === soy.donem; });
-    var satirlar = [], cur = null;
+    var satirlar = [], cur = null, sat = {}, kom = {}, yuva = {};
     fs.forEach(function (v) {
       if (!cur || cur.length >= AG.MAX || v.y - cur[0].y > 120) { cur = []; satirlar.push(cur); }
-      cur.push(v);
+      cur.push(v); sat[v.id] = satirlar.length - 1; kom[v.id] = [];
     });
-    var poz = {}, sol = AG.LX + AG.GX + AG.NW / 2, sag = AG.W - AG.GX - AG.NW / 2, adim = AG.NW + AG.GX;
-    satirlar.forEach(function (row, r) {
-      var y = 28 + r * AG.RH, k = row.length;
-      var ist = row.map(function (v, i) {
-        var xs = soyBag(v.id, "in").map(function (b) { return poz[b.id] && poz[b.id].y < y ? poz[b.id].x : null; }).filter(function (x) { return x !== null; });
-        var bos = sol + (sag - sol) * (k === 1 ? 0.5 : i / (k - 1));
-        return { v: v, x: xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : bos };
+    fs.forEach(function (v) {
+      soyBag(v.id, "out").forEach(function (k) {
+        if (k.id in kom && k.id !== v.id) { kom[v.id].push(k.id); kom[k.id].push(v.id); }
       });
-      ist.sort(function (a, b) { return a.x - b.x; });
-      for (var i = 0; i < ist.length; i++) { ist[i].x = Math.max(ist[i].x, sol); if (i) ist[i].x = Math.max(ist[i].x, ist[i - 1].x + adim); }
-      for (i = ist.length - 1; i >= 0; i--) { ist[i].x = Math.min(ist[i].x, i === ist.length - 1 ? sag : ist[i + 1].x - adim); }
-      ist.forEach(function (o) { poz[o.v.id] = { x: o.x, y: y, r: r }; });
+    });
+    satirlar.forEach(function (row) {
+      var k = row.length;
+      row.forEach(function (v, i) { yuva[v.id] = k === 1 ? 2 : Math.round(i * (AG.MAX - 1) / (k - 1)); });
+    });
+    // Maliyet: bağların yatay uzunluğu (yakın satırlar daha ağır). En iyi yerleşim saklanır.
+    function maliyet() {
+      var m = 0;
+      fs.forEach(function (v) { kom[v.id].forEach(function (b) { var dr = Math.abs(sat[b] - sat[v.id]) || 1; m += Math.abs(yuva[b] - yuva[v.id]) / dr; }); });
+      return m;
+    }
+    var enIyi = Object.assign({}, yuva), enMal = maliyet();
+    for (var tur = 0; tur < 12; tur++) {
+      var sira = satirlar.map(function (_, r) { return r; });
+      if (tur % 2) sira.reverse();
+      sira.forEach(function (r) {
+        var row = satirlar[r];
+        var ist = row.map(function (v) {
+          var t = 0, w = 0;
+          kom[v.id].forEach(function (b) {
+            var dr = Math.abs(sat[b] - r); if (!dr) return;
+            var a = 1 / dr; t += yuva[b] * a; w += a;
+          });
+          return { v: v, h: w ? t / w : yuva[v.id] };
+        });
+        ist.sort(function (a, b) { return a.h - b.h || yuva[a.v.id] - yuva[b.v.id]; });
+        var s = yuvaAta(ist.map(function (o) { return o.h; }));
+        ist.forEach(function (o, i) { yuva[o.v.id] = s[i]; });
+      });
+      var m = maliyet();
+      if (m < enMal - 1e-9) { enMal = m; enIyi = Object.assign({}, yuva); }
+    }
+    var poz = {};
+    satirlar.forEach(function (row, r) {
+      row.forEach(function (v) { poz[v.id] = { x: agYuva(enIyi[v.id]), y: 28 + r * AG.RH, r: r, s: enIyi[v.id] }; });
     });
     return { satirlar: satirlar, poz: poz, H: 28 + satirlar.length * AG.RH };
   }
@@ -981,32 +1029,109 @@ footer { margin-top: 28px; color: var(--muted); font-size: .8rem; }
     });
     s += "</g></svg>";
     kap.innerHTML = s;
+    // Fareyle bir kartın üstüne gelince yalnızca onun doğrudan bağları belirginleşir.
+    var svg = $("agac-svg");
+    function uzerinde(id) {
+      svg.classList.toggle("uzerinde", !!id);
+      Array.prototype.forEach.call(svg.querySelectorAll(".hv"), function (x) { x.classList.remove("hv"); });
+      if (!id) return;
+      var g = svg.querySelector('[data-ag="' + id + '"]'); if (g) g.classList.add("hv");
+      Array.prototype.forEach.call(svg.querySelectorAll('.ag-k[data-a="' + id + '"], .ag-k[data-b="' + id + '"]'), function (k) {
+        k.classList.add("hv");
+        var o = k.getAttribute("data-a") === id ? k.getAttribute("data-b") : k.getAttribute("data-a");
+        var og = svg.querySelector('[data-ag="' + o + '"]'); if (og) og.classList.add("hv");
+      });
+      var kk = $("ag-kenar"); Array.prototype.forEach.call(svg.querySelectorAll(".ag-k.hv"), function (k) { kk.appendChild(k); });
+    }
+    svg.addEventListener("pointerover", function (e) {
+      if (e.pointerType !== "mouse") return;
+      var g = e.target.closest("[data-ag]"); uzerinde(g ? g.getAttribute("data-ag") : null);
+    });
+    svg.addEventListener("pointerleave", function () { uzerinde(null); });
     agacOlcek();
     agacIsaretle();
   }
+  // Köşeleri yuvarlatılmış kırık çizgi (metro haritası gibi).
+  function kirikYol(pts, R) {
+    var p = pts.filter(function (q, i) { return !i || Math.abs(q[0] - pts[i - 1][0]) > 0.5 || Math.abs(q[1] - pts[i - 1][1]) > 0.5; });
+    var f = function (n) { return n.toFixed(1); }, d = "M" + f(p[0][0]) + " " + f(p[0][1]);
+    for (var i = 1; i < p.length - 1; i++) {
+      var a = p[i - 1], b = p[i], c = p[i + 1];
+      var l1 = Math.hypot(b[0] - a[0], b[1] - a[1]), l2 = Math.hypot(c[0] - b[0], c[1] - b[1]), r = Math.min(R, l1 / 2, l2 / 2);
+      d += " L" + f(b[0] + (a[0] - b[0]) * r / l1) + " " + f(b[1] + (a[1] - b[1]) * r / l1) +
+        " Q" + f(b[0]) + " " + f(b[1]) + " " + f(b[0] + (c[0] - b[0]) * r / l2) + " " + f(b[1] + (c[1] - b[1]) * r / l2);
+    }
+    var z = p[p.length - 1];
+    return d + " L" + f(z[0]) + " " + f(z[1]);
+  }
+  // Çizgileri üç türe ayırır: aynı satır (kartların altından kısa kavis), komşu satır (yumuşak S eğrisi)
+  // ve uzak bağ (oluk kanalından inen kırık çizgi). Her kartta çizgiler tek noktadan değil, gittikleri
+  // yöne göre sıralanmış ayrı uçlardan çıkar; böylece demet hâlinde üst üste binmezler.
   function agacKenarlar() {
-    var d = soy.ag, hat = soy.hat || { ust: {}, alt: {} }, sec = soy.secili, normal = "", vurgu = "";
+    var d = soy.ag, hat = soy.hat || { ust: {}, alt: {} }, sec = soy.secili, normal = "", uzak = "", vurgu = "";
+    var cift = {}, kenar = [];
     Object.keys(d.poz).forEach(function (a) {
       soyBag(a, "out").forEach(function (k) {
-        var b = k.id, pa = d.poz[a], pb = d.poz[b]; if (!pb || a === b) return;
-        var sinif = "ag-k" + (k.r === "hoca" ? " h" : ""), one = false;
-        if (sec) {
-          if (a in hat.ust && (b === sec || b in hat.ust)) { sinif += " ust"; one = true; }
-          else if (b in hat.alt && (a === sec || a in hat.alt)) { sinif += " alt"; one = true; }
-          if (one && (a === sec || b === sec)) sinif += " dog";
-        }
-        var yol, x1 = pa.x, x2 = pb.x;
-        if (pa.r === pb.r) { var yb = pa.y + AG.NH; yol = "M" + x1 + " " + yb + " C" + x1 + " " + (yb + 34) + " " + x2 + " " + (yb + 34) + " " + x2 + " " + yb; }
-        else {
-          var y1 = pa.y + AG.NH, y2 = pb.y, ara = pb.y < pa.y ? -60 : Math.min(y2 - y1, 220) * 0.55;
-          if (pb.y < pa.y) { y1 = pa.y; y2 = pb.y + AG.NH; }
-          yol = "M" + x1.toFixed(1) + " " + y1 + " C" + x1.toFixed(1) + " " + (y1 + ara) + " " + x2.toFixed(1) + " " + (y2 - ara) + " " + x2.toFixed(1) + " " + y2;
-        }
-        var p = '<path class="' + sinif + '" d="' + yol + '"/>';
-        if (one) vurgu += p; else normal += p;
+        var b = k.id; if (!d.poz[b] || a === b) return;
+        var anah = a < b ? a + "|" + b : b + "|" + a;
+        if (cift[anah]) { if (k.r === "hoca") cift[anah].k = k; return; }
+        var pa = d.poz[a], pb = d.poz[b], u = pa.r <= pb.r ? a : b;
+        cift[anah] = { a: a, b: b, k: k, u: u, l: u === a ? b : a, dr: Math.abs(pa.r - pb.r) };
+        kenar.push(cift[anah]);
       });
     });
-    $("ag-kenar").innerHTML = normal + vurgu;
+    // Uzak bağlar için oluk ve şerit seçimi.
+    var oluklar = {};
+    kenar.forEach(function (e) {
+      if (e.dr < 2) return;
+      var xu = d.poz[e.u].x, xl = d.poz[e.l].x, orta = (xu + xl) / 2, en = 0, enM = Infinity;
+      for (var g = 0; g <= AG.MAX; g++) {
+        var ox = agOluk(g), m = Math.abs(ox - xu) + Math.abs(ox - xl) + 0.1 * Math.abs(ox - orta);
+        if (m < enM) { enM = m; en = g; }
+      }
+      e.g = en; (oluklar[en] = oluklar[en] || []).push(e);
+    });
+    Object.keys(oluklar).forEach(function (g) {
+      oluklar[g].sort(function (a, b) { return d.poz[a.u].r - d.poz[b.u].r || d.poz[a.l].r - d.poz[b.l].r; });
+      oluklar[g].forEach(function (e, i) { e.serit = i; e.ox = agOluk(+g) + ((i % 5) - 2) * 4; });
+    });
+    // Kart uçları: alt kenardan aşağı/aynı satıra, üst kenardan yukarı giden çizgiler.
+    var uclar = {};
+    function uc(id, yer, e, yon) { var k = id + yer; (uclar[k] = uclar[k] || []).push({ e: e, yon: yon, id: id }); }
+    kenar.forEach(function (e) {
+      var pu = d.poz[e.u], pl = d.poz[e.l];
+      if (!e.dr) { uc(e.u, "a", e, pl.x); uc(e.l, "a", e, pu.x); }
+      else if (e.dr === 1) { uc(e.u, "a", e, pl.x); uc(e.l, "u", e, pu.x); }
+      else { uc(e.u, "a", e, e.ox); uc(e.l, "u", e, e.ox); }
+    });
+    Object.keys(uclar).forEach(function (k) {
+      var ls = uclar[k], n = ls.length, cx = d.poz[ls[0].id].x, ara = Math.min(12, AG.NW * 0.7 / n);
+      ls.sort(function (a, b) { return a.yon - b.yon; });
+      ls.forEach(function (o, i) { o.e[o.id === o.e.u ? "xu" : "xl"] = cx + (i - (n - 1) / 2) * ara; });
+    });
+    kenar.forEach(function (e) {
+      var pu = d.poz[e.u], pl = d.poz[e.l], a = e.a, b = e.b, k = e.k;
+      var sinif = "ag-k" + (k.r === "hoca" ? " h" : "") + (e.dr > 1 ? " uz" : ""), one = false;
+      if (sec) {
+        if (a in hat.ust && (b === sec || b in hat.ust)) { sinif += " ust"; one = true; }
+        else if (b in hat.alt && (a === sec || a in hat.alt)) { sinif += " alt"; one = true; }
+        if (one && (a === sec || b === sec)) sinif += " dog";
+      }
+      var yb = pu.y + AG.NH, yt = pl.y, x1 = e.xu, x2 = e.xl, yol;
+      if (!e.dr) {
+        var der = yb + 12 + Math.min(30, (Math.abs(pu.s - pl.s) - 1) * 8);
+        yol = kirikYol([[x1, yb], [x1, der], [x2, der], [x2, yb]], 10);
+      } else if (e.dr === 1) {
+        var ym = (yb + yt) / 2;
+        yol = "M" + x1.toFixed(1) + " " + yb + " C" + x1.toFixed(1) + " " + ym + " " + x2.toFixed(1) + " " + ym + " " + x2.toFixed(1) + " " + yt;
+      } else {
+        var kat = (e.serit % 3) * 8, h1 = yb + 12 + kat, h2 = yt - 12 - kat;
+        yol = kirikYol([[x1, yb], [x1, h1], [e.ox, h1], [e.ox, h2], [x2, h2], [x2, yt]], 16);
+      }
+      var p = '<path class="' + sinif + '" data-a="' + a + '" data-b="' + b + '" d="' + yol + '"/>';
+      if (one) vurgu += p; else if (e.dr > 1) uzak += p; else normal += p;
+    });
+    $("ag-kenar").innerHTML = uzak + normal + vurgu;
   }
   function agacIsaretle() {
     var svg = $("agac-svg"); if (!svg) return;
