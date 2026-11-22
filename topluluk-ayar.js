@@ -3,6 +3,6 @@
 // "anon" anahtarı tarayıcıda görünmek üzere tasarlanmıştır; güvenliği veritabanındaki kurallar (RLS) sağlar.
 // Boş kalırsa akademik taraf çalışmaya devam eder, Topluluk sekmesi "henüz bağlanmadı" der.
 window.HELEZON_TOPLULUK = {
-  url: "",
+  url: "https://bbvijsqbrlsncyboyqxy.supabase.co",
   anahtar: "sb_publishable_rcORcmfjS1r-IH4odBzkSQ_i4ym5q_z"
 };
