@@ -1,0 +1,36 @@
+name: Supabase uyanık tut
+
+# Ücretsiz Supabase projeleri 7 gün hiç kullanılmazsa duraklatılır.
+# Bu iş 3 günde bir topluluk veritabanına küçük bir okuma isteği atar.
+# Adres ve herkese açık (publishable) anahtar topluluk-ayar.js'ten okunur; gizli anahtar gerekmez.
+
+on:
+  schedule:
+    - cron: "17 6 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dokun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Veritabanına okuma isteği gönder
+        run: |
+          URL=$(sed -n 's/.*url: *"\([^"]*\)".*/\1/p' topluluk-ayar.js)
+          ANAHTAR=$(sed -n 's/.*anahtar: *"\([^"]*\)".*/\1/p' topluluk-ayar.js)
+          if [ -z "$URL" ] || [ -z "$ANAHTAR" ]; then
+            echo "topluluk-ayar.js içinde adres ya da anahtar yok; atlanıyor."
+            exit 0
+          fi
+          KOD=$(curl -s -o yanit.json -w "%{http_code}" --retry 3 --retry-delay 10 \
+            "$URL/rest/v1/konular?select=id&limit=1" \
+            -H "apikey: $ANAHTAR" -H "Authorization: Bearer $ANAHTAR")
+          echo "HTTP $KOD"
+          head -c 300 yanit.json; echo
+          if [ "$KOD" -lt 200 ] || [ "$KOD" -ge 300 ]; then
+            echo "::error::Supabase yanıt vermedi (HTTP $KOD). Proje duraklatılmış olabilir: Supabase panelinden 'Restore' ile açın."
+            exit 1
+          fi
