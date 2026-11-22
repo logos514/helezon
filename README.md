@@ -21,6 +21,8 @@ Topluluk yazıları ve hesaplar Helezon'a ait ayrı bir Supabase projesinde duru
 5. Siteye bir kez kayıt olun, sonra SQL Editor'de `update profiller set rol = 'yonetici' where kullanici_adi = 'KULLANICI-ADINIZ';` çalıştırın.
 6. `sw.js` içindeki `SURUM` değerini artırın.
 
+`.github/workflows/supabase-uyanik.yml` 3 günde bir veritabanına küçük bir okuma isteği atar; ücretsiz proje 7 gün kullanılmayınca duraklatılmasın diye. İş kırmızı olursa Supabase panelinden projeyi "Restore" ile açın.
+
 `topluluk-ayar.js` boşsa akademik taraf normal çalışır, Topluluk sekmesi "henüz bağlanmadı" der. Topluluk tarafı çevrimdışı çalışmaz; Supabase kütüphanesi yalnızca Topluluk açıldığında yüklenir.
 
 ## Soy ağacı
